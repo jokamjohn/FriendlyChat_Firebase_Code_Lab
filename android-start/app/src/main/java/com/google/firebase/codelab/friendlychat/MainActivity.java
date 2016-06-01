@@ -40,6 +40,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.appinvite.AppInviteInvitation;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
@@ -49,6 +51,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
@@ -99,6 +102,8 @@ public class MainActivity extends AppCompatActivity
     private FirebaseRecyclerAdapter<FriendlyMessage, MessageViewHolder> mFirebaseAdapter;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private AdView mAdView;
 
 
     @Override
@@ -239,6 +244,11 @@ public class MainActivity extends AppCompatActivity
                 mMessageEditText.setText("");
             }
         });
+
+        //Place the ad in the adView
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
     }
 
     // Fetch the config to determine the allowed length of messages.
@@ -298,16 +308,25 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
     }
 
     @Override
     public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroy();
     }
 
@@ -322,6 +341,11 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
+            case R.id.crash_menu:
+                FirebaseCrash.logcat(Log.ERROR, TAG, "crash caused");
+                causeCrash();
+                return true;
+
             case R.id.invite_menu:
                 sendInvitation();
                 return true;
@@ -341,6 +365,11 @@ public class MainActivity extends AppCompatActivity
                 return super.onOptionsItemSelected(item);
         }
 
+    }
+
+    //Fake crash
+    private void causeCrash() {
+        throw new NullPointerException("Fake null Pointer");
     }
 
     @Override
@@ -383,7 +412,7 @@ public class MainActivity extends AppCompatActivity
                 //Log the event of sharing to Firebase Analytics
                 Bundle payLoad = new Bundle();
                 payLoad.putString(FirebaseAnalytics.Param.VALUE, "Not sent");
-                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE,payLoad);
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE, payLoad);
 
                 // Sending failed or it was canceled, show failure message to
                 // the user
