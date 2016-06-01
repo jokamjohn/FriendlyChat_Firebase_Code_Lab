@@ -46,6 +46,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -97,6 +98,7 @@ public class MainActivity extends AppCompatActivity
     private DatabaseReference mDatabaseReference;
     private FirebaseRecyclerAdapter<FriendlyMessage, MessageViewHolder> mFirebaseAdapter;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
 
     @Override
@@ -107,6 +109,10 @@ public class MainActivity extends AppCompatActivity
         // Set default username is anonymous.
         mUsername = ANONYMOUS;
 
+        //Initialise Firebase Analytics
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        //Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
 
@@ -364,11 +370,21 @@ public class MainActivity extends AppCompatActivity
 
         if (requestCode == REQUEST_INVITE) {
             if (resultCode == RESULT_OK) {
+                //Log the event of sharing to Firebase Analytics
+                Bundle payLoad = new Bundle();
+                payLoad.putString(FirebaseAnalytics.Param.VALUE, "Sent");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE, payLoad);
+
                 // Check how many invitations were sent.
                 String[] ids = AppInviteInvitation
                         .getInvitationIds(resultCode, data);
                 Log.d(TAG, "Invitations sent: " + ids.length);
             } else {
+                //Log the event of sharing to Firebase Analytics
+                Bundle payLoad = new Bundle();
+                payLoad.putString(FirebaseAnalytics.Param.VALUE, "Not sent");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE,payLoad);
+
                 // Sending failed or it was canceled, show failure message to
                 // the user
                 Log.d(TAG, "Failed to send invitation.");
